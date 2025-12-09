@@ -21,7 +21,7 @@ public class ApiResponse<T> {
     /**
      * Human readable message.
      */
-    private String message;
+    private String msg;
 
     /**
      * Actual payload.
@@ -31,7 +31,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.<T>builder()
                 .code(0)
-                .message("success")
+                .msg("success")
                 .data(data)
                 .build();
     }
@@ -39,7 +39,7 @@ public class ApiResponse<T> {
     public static <T> ApiResponse<T> failure(int code, String message) {
         return ApiResponse.<T>builder()
                 .code(code)
-                .message(message)
+                .msg(message)
                 .build();
     }
 }
