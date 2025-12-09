@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: gateway-server
+  redis:
+    host: localhost
+    port: 6379
+
+# Auth filter whitelist defaults; adjust per environment
+gateway:
+  auth:
+    whitelist:
+      - /sso/**
+      - /actuator/**
+  sso:
+    inner-secret: change-me
+    ttl: 60s
+    redis-key-prefix: sso:ticket:
+    default-gateway-base-url: https://gateway.example.com
+  systems:
+    routes:
+      - system-code: BIZ-APP
+        route-prefix: /biz-app
+        ticket-enabled: true
+        gateway-base-url: https://gateway.example.com/biz-app

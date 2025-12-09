@@ -22,6 +22,7 @@
         <module>common</module>
         <module>auth-server</module>
         <module>portal-server</module>
+        <module>gateway-server</module>
     </modules>
 
     <properties>
