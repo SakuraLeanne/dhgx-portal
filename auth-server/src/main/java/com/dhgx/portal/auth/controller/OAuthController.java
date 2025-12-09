@@ -17,8 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -46,8 +44,8 @@ public class OAuthController {
                                           @RequestParam(value = "scope", required = false, defaultValue = "openid profile") String scope,
                                           @RequestParam(value = "state", required = false) String state) {
         if (!StpUtil.isLogin()) {
-            MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-            headers.add(HttpHeaders.LOCATION, "/login");
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.LOCATION, "/login");
             return ResponseEntity.status(302).headers(headers).build();
         }
         if (!"code".equalsIgnoreCase(responseType)) {
@@ -58,8 +56,8 @@ public class OAuthController {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(redirectUri)
                 .queryParam("code", code.getCode())
                 .queryParam("state", state);
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add(HttpHeaders.LOCATION, builder.build(true).toUriString());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.LOCATION, builder.build(true).toUriString());
         return ResponseEntity.status(302).headers(headers).build();
     }
 
