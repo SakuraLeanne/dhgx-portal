@@ -38,11 +38,11 @@ public class OAuthController {
     private final UserService userService;
 
     @GetMapping("/authorize")
-    public ResponseEntity<Void> authorize(@RequestParam("client_id") String clientId,
-                                          @RequestParam("response_type") String responseType,
-                                          @RequestParam("redirect_uri") String redirectUri,
-                                          @RequestParam(value = "scope", required = false, defaultValue = "openid profile") String scope,
-                                          @RequestParam(value = "state", required = false) String state) {
+    public ResponseEntity<ApiResponse<Void>> authorize(@RequestParam("client_id") String clientId,
+                                                       @RequestParam("response_type") String responseType,
+                                                       @RequestParam("redirect_uri") String redirectUri,
+                                                       @RequestParam(value = "scope", required = false, defaultValue = "openid profile") String scope,
+                                                       @RequestParam(value = "state", required = false) String state) {
         if (!StpUtil.isLogin()) {
             HttpHeaders headers = new HttpHeaders();
             headers.set(HttpHeaders.LOCATION, "/login");
@@ -58,16 +58,16 @@ public class OAuthController {
                 .queryParam("state", state);
         HttpHeaders headers = new HttpHeaders();
         headers.set(HttpHeaders.LOCATION, builder.build(true).toUriString());
-        return ResponseEntity.status(302).headers(headers).build();
+        return ResponseEntity.status(302).headers(headers).body(ApiResponse.success(null));
     }
 
     @PostMapping(value = "/token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<?> token(@RequestParam("grant_type") String grantType,
-                                   @RequestParam(value = "code", required = false) String code,
-                                   @RequestParam(value = "redirect_uri", required = false) String redirectUri,
-                                   @RequestParam("client_id") String clientId,
-                                   @RequestParam("client_secret") String clientSecret,
-                                   @RequestParam(value = "refresh_token", required = false) String refreshToken) {
+    public ApiResponse<OAuthTokenResponse> token(@RequestParam("grant_type") String grantType,
+                                                 @RequestParam(value = "code", required = false) String code,
+                                                 @RequestParam(value = "redirect_uri", required = false) String redirectUri,
+                                                 @RequestParam("client_id") String clientId,
+                                                 @RequestParam("client_secret") String clientSecret,
+                                                 @RequestParam(value = "refresh_token", required = false) String refreshToken) {
         OAuthClient client = clientService.authenticateClient(clientId, clientSecret);
         TokenPair tokenPair;
         if ("authorization_code".equals(grantType)) {
@@ -85,18 +85,18 @@ public class OAuthController {
                 .expiresIn(Duration.between(Instant.now(), tokenPair.getAccessTokenExpiresAt()).getSeconds())
                 .scope(tokenPair.getScopes().stream().collect(Collectors.joining(" ")))
                 .build();
-        return ResponseEntity.ok(response);
+        return ApiResponse.success(response);
     }
 
     @PostMapping(value = "/check_token", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    public ResponseEntity<Map<String, Object>> checkToken(@RequestParam("token") @NotBlank String token) {
+    public ApiResponse<Map<String, Object>> checkToken(@RequestParam("token") @NotBlank String token) {
         TokenPair pair;
         try {
             pair = tokenService.validateToken(token);
         } catch (BusinessException e) {
             Map<String, Object> inactive = new HashMap<>();
             inactive.put("active", false);
-            return ResponseEntity.ok(inactive);
+            return ApiResponse.success(inactive);
         }
         UserAccount user = userService.findById(pair.getUserId());
         Map<String, Object> body = new HashMap<>();
@@ -108,11 +108,11 @@ public class OAuthController {
         body.put("exp", pair.getAccessTokenExpiresAt().getEpochSecond());
         body.put("authorities", user != null ? user.getRoles() : null);
         body.put("tenant_id", user != null ? user.getTenantId() : null);
-        return ResponseEntity.ok(body);
+        return ApiResponse.success(body);
     }
 
     @GetMapping("/userinfo")
-    public ResponseEntity<Map<String, Object>> userInfo(HttpServletRequest request) {
+    public ApiResponse<Map<String, Object>> userInfo(HttpServletRequest request) {
         String token = BearerTokenExtractor.extract(request);
         TokenPair tokenPair = tokenService.validateToken(token);
         UserAccount user = userService.findById(tokenPair.getUserId());
@@ -124,14 +124,14 @@ public class OAuthController {
         body.put("phone_number", user != null ? user.getPhoneNumber() : null);
         body.put("tenant_id", user != null ? user.getTenantId() : null);
         body.put("roles", user != null ? user.getRoles() : null);
-        return ResponseEntity.ok(body);
+        return ApiResponse.success(body);
     }
 
     @GetMapping("/jwks")
-    public Map<String, Object> jwks() {
+    public ApiResponse<Map<String, Object>> jwks() {
         Map<String, Object> response = new HashMap<>();
         response.put("keys", java.util.Collections.emptyList());
-        return response;
+        return ApiResponse.success(response);
     }
 
     @RequestMapping(value = "/logout", method = {RequestMethod.POST, RequestMethod.GET})

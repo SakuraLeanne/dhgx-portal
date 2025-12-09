@@ -1,5 +1,6 @@
 package com.dhgx.portal.auth.controller;
 
+import com.dhgx.portal.common.model.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -13,7 +14,7 @@ import java.util.Map;
 public class OidcController {
 
     @GetMapping("/.well-known/openid-configuration")
-    public Map<String, Object> openidConfiguration(HttpServletRequest request) {
+    public ApiResponse<Map<String, Object>> openidConfiguration(HttpServletRequest request) {
         String issuer = request.getRequestURL().toString().replace(request.getRequestURI(), "");
         Map<String, Object> body = new HashMap<>();
         body.put("issuer", issuer);
@@ -26,6 +27,6 @@ public class OidcController {
         body.put("id_token_signing_alg_values_supported", Collections.singletonList("RS256"));
         body.put("scopes_supported", Arrays.asList("openid", "profile"));
         body.put("token_endpoint_auth_methods_supported", Collections.singletonList("client_secret_post"));
-        return body;
+        return ApiResponse.success(body);
     }
 }
