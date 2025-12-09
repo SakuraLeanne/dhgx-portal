@@ -3,6 +3,7 @@
 智慧园区统一门户项目（auth-server / portal-server / gateway-server / api-server）开发记录。
 
 ## 架构概览
+- **common**：通用模块，存放标准响应体、异常定义与校验工具等公共类。
 - **auth-server**：Spring Boot + Sa-Token + OAuth2 + OIDC 统一认证中心。
 - **portal-server**：统一门户后端，作为 OAuth2 客户端，处理门户业务、系统列表、菜单列表等。
 - **gateway-server**：基于 Spring Cloud Gateway，提供统一网关、access_token 鉴权与一次性 ticket 单点登录。
