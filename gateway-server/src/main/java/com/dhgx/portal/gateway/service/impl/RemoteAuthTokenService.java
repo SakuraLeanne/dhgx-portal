@@ -5,6 +5,7 @@ import com.dhgx.portal.gateway.exception.GatewayException;
 import com.dhgx.portal.gateway.model.AuthUserInfoDTO;
 import com.dhgx.portal.gateway.service.AuthTokenService;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class RemoteAuthTokenService implements AuthTokenService {
         userInfo.setUsername((String) response.getOrDefault("user_name", ""));
         userInfo.setUserId(parseLong(response.get("user_id")));
         userInfo.setTenantId(parseLong(response.get("tenant_id")));
-        userInfo.setRoles((List<String>) response.getOrDefault("authorities", List.of()));
+        userInfo.setRoles((List<String>) response.getOrDefault("authorities", Collections.emptyList()));
         Object exp = response.get("exp");
         if (exp instanceof Number) {
             userInfo.setExp(((Number) exp).longValue());

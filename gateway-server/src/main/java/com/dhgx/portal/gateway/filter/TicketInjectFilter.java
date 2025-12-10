@@ -37,7 +37,7 @@ public class TicketInjectFilter implements GlobalFilter, Ordered {
         }
 
         Optional<GatewaySystemProperties.SystemRoute> route = matchRoute(uri.getPath());
-        if (route.isEmpty()) {
+        if (!route.isPresent()) {
             return chain.filter(exchange);
         }
 
