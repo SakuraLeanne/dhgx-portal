@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Encapsulates the generated jump URL.
+ * 封装生成的跳转链接与对应的 ticket。
  */
 @Data
 @Builder

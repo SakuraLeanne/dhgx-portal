@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Basic info about a business system shown in the portal.
+ * 门户展示的业务系统基础信息。
  */
 @Data
 @Builder

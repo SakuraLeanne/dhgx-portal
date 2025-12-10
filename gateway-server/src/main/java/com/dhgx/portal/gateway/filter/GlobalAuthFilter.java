@@ -19,6 +19,17 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/**
+ * 全局 access_token 鉴权过滤器。
+ * <p>
+ * 主要职责：
+ * <ul>
+ *     <li>按配置的白名单决定是否跳过鉴权；</li>
+ *     <li>从请求头或 Cookie 中解析 access_token；</li>
+ *     <li>调用 AuthTokenService 完成 token 校验，并将用户信息透传到下游服务。</li>
+ * </ul>
+ * 使用 GateWay 的 {@link GlobalFilter} 机制，在转发链路前完成统一安全拦截。
+ */
 @Component
 @RequiredArgsConstructor
 public class GlobalAuthFilter implements GlobalFilter, Ordered {
@@ -51,6 +62,10 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
                 .onErrorResume(ex -> unauthorized(exchange, "access_token 无效"));
     }
 
+    /**
+     * 判断当前路径是否命中白名单。
+     * 使用 AntPath 模式，便于配置如 /sso/** 之类的路径免鉴权。
+     */
     private boolean isWhitelisted(String path) {
         List<String> whitelist = authTokenProperties.getWhitelist();
         if (CollectionUtils.isEmpty(whitelist)) {
@@ -59,6 +74,9 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
         return whitelist.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
+    /**
+     * 从请求中解析出 access_token，优先读取 Authorization: Bearer，再退回 Cookie。
+     */
     private String resolveToken(ServerHttpRequest request) {
         String authorization = request.getHeaders().getFirst("Authorization");
         if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
@@ -69,6 +87,9 @@ public class GlobalAuthFilter implements GlobalFilter, Ordered {
                 : null;
     }
 
+    /**
+     * 将鉴权成功后的用户信息注入到请求头，供下游服务透传使用。
+     */
     private ServerHttpRequest enrichHeaders(ServerHttpRequest request, AuthUserInfoDTO user) {
         return request.mutate()
                 .header("X-User-Id", user.getUserId() == null ? "" : String.valueOf(user.getUserId()))

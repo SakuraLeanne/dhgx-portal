@@ -14,11 +14,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 门户核心服务，提供系统列表、菜单树以及带 ticket 的跳转链接组装能力。
+ */
 @Service
 public class PortalService {
 
     public List<PortalSystem> listSystems() {
-        // TODO replace mock data with database query
+        // TODO 后续替换为从数据库或配置中心加载系统信息
         return Arrays.asList(
                 PortalSystem.builder()
                         .id(1L)
@@ -38,7 +41,7 @@ public class PortalService {
     }
 
     public List<MenuNode> listMenus() {
-        // TODO replace mock data with database query
+        // TODO 后续替换为从数据库或配置中心加载菜单树
         MenuNode home = MenuNode.builder()
                 .id(1L)
                 .name("首页")
@@ -88,7 +91,7 @@ public class PortalService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND, "未找到对应的业务系统"));
 
-        // TODO call gateway to create a one-time ticket and sign the jump URL
+        // TODO 调用网关创建一次性 ticket 并生成跳转地址，这里先使用 mock 数据
         String ticket = "ticket-" + UUID.randomUUID();
         String normalizedPath = request.getTargetPath().startsWith("/") ? request.getTargetPath() : "/" + request.getTargetPath();
         String baseUrl = system.getBaseUrl().endsWith("/")

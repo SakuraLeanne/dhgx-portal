@@ -8,6 +8,9 @@ import javax.validation.constraints.NotNull;
 
 import lombok.Data;
 
+/**
+ * 创建 ticket 的请求参数模型，供门户传入用户与目标系统信息。
+ */
 @Data
 public class TicketCreateRequest {
 

@@ -16,6 +16,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+/**
+ * 通过调用 auth-server `/oauth2/check_token` 接口完成远程 token 校验的实现。
+ */
 @Service
 @RequiredArgsConstructor
 public class RemoteAuthTokenService implements AuthTokenService {
@@ -37,6 +40,9 @@ public class RemoteAuthTokenService implements AuthTokenService {
                 .onErrorMap(ex -> new GatewayException(40101, "access_token 校验失败"));
     }
 
+    /**
+     * 将 /check_token 返回的 Map 转换为内部统一的用户信息对象。
+     */
     private AuthUserInfoDTO mapToAuthUser(Map<String, Object> response) {
         boolean active = Boolean.TRUE.equals(response.get("active"));
         if (!active) {
@@ -55,6 +61,9 @@ public class RemoteAuthTokenService implements AuthTokenService {
         return userInfo;
     }
 
+    /**
+     * 兼容字符串与数字类型的 ID 解析。
+     */
     private Long parseLong(Object value) {
         if (value instanceof Number) {
             return ((Number) value).longValue();
@@ -69,6 +78,9 @@ public class RemoteAuthTokenService implements AuthTokenService {
         return null;
     }
 
+    /**
+     * 组装 Basic Auth 头，供客户端模式访问 `/check_token`。
+     */
     private String basicAuthHeader() {
         String token = authTokenProperties.getClientId() + ":" + authTokenProperties.getClientSecret();
         return "Basic " + Base64Utils.encodeToString(token.getBytes(StandardCharsets.UTF_8));

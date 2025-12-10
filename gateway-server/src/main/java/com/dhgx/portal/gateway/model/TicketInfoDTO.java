@@ -6,6 +6,9 @@ import java.util.Map;
 
 import lombok.Data;
 
+/**
+ * 存储在 Redis 中的 ticket 完整信息模型。
+ */
 @Data
 public class TicketInfoDTO {
     private String ticket;

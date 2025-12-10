@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * Menu node used for building the portal navigation tree.
+ * 门户导航菜单节点结构，可组成树形菜单。
  */
 @Data
 @Builder

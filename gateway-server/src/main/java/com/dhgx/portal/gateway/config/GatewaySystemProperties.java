@@ -8,6 +8,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.Data;
 
+/**
+ * 网关侧关于业务系统路由的配置项。
+ */
 @Data
 @ConfigurationProperties(prefix = "gateway.systems")
 public class GatewaySystemProperties {
@@ -23,22 +26,22 @@ public class GatewaySystemProperties {
     @Data
     public static class SystemRoute {
         /**
-         * Business system code, e.g. BIZ-APP.
+         * 业务系统编码，例如 BIZ-APP。
          */
         private String systemCode;
 
         /**
-         * Route prefix that matches gateway routes, e.g. /biz-app/**.
+         * 网关路由前缀，如 /biz-app/**。
          */
         private String routePrefix;
 
         /**
-         * Whether ticket validation should apply for this route.
+         * 是否对该路由启用 ticket 校验。
          */
         private boolean ticketEnabled = true;
 
         /**
-         * Base URL returned to portal when issuing jump URLs.
+         * 门户生成跳转链接时返回的网关前缀地址。
          */
         private String gatewayBaseUrl;
     }

@@ -20,6 +20,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+/**
+ * 门户跳转业务系统时的 Ticket 注入过滤器。
+ * <p>
+ * 负责在转发前校验一次性 ticket，并将用户信息写入 Header，
+ * 让后端业务系统在首次访问时即可感知登录身份。
+ */
 @Component
 @RequiredArgsConstructor
 public class TicketInjectFilter implements GlobalFilter, Ordered {
@@ -51,12 +57,18 @@ public class TicketInjectFilter implements GlobalFilter, Ordered {
                         responseWriter.writeJson(exchange.getResponse(), ApiResponse.failure(ex.getCode(), ex.getMessage()), HttpStatus.UNAUTHORIZED));
     }
 
+    /**
+     * 按路由前缀找到需要启用 ticket 校验的路由定义。
+     */
     private Optional<GatewaySystemProperties.SystemRoute> matchRoute(String path) {
         return systemProperties.getRoutes().stream()
                 .filter(route -> route.isTicketEnabled() && StringUtils.hasText(route.getRoutePrefix()) && path.startsWith(route.getRoutePrefix()))
                 .findFirst();
     }
 
+    /**
+     * 校验成功后，把用户身份信息写入自定义 Header 再继续转发。
+     */
     private Mono<Void> forwardWithHeaders(ServerWebExchange exchange, GatewayFilterChain chain, TicketValidationResponse user) {
         ServerHttpRequest mutated = exchange.getRequest().mutate()
                 .header("X-User-Id", user.getUserId() == null ? "" : String.valueOf(user.getUserId()))

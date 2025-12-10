@@ -20,6 +20,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import reactor.core.publisher.Mono;
 
+/**
+ * Ticket 领域服务实现，负责生成、校验以及回收一次性票据。
+ *
+ * 采用 Redis 存储短时凭证，通过 TTL 控制有效期，校验通过后立即删除实现一次性使用。
+ */
 @Service
 @RequiredArgsConstructor
 public class TicketServiceImpl implements TicketService {
@@ -31,9 +36,11 @@ public class TicketServiceImpl implements TicketService {
 
     @Override
     public Mono<TicketCreateResponse> createTicket(TicketCreateRequest request) {
+        // 校验系统编码是否在网关已配置的路由中启用
         GatewaySystemProperties.SystemRoute systemRoute = systemProperties.findByCode(request.getSystemCode())
                 .orElseThrow(() -> new GatewayException(30001, "目标系统不存在或已停用"));
 
+        // 生成一次性 ticket，并封装基础信息
         String ticket = "TICKET-" + UUID.randomUUID();
         LocalDateTime now = LocalDateTime.now();
         TicketInfoDTO ticketInfo = new TicketInfoDTO();
@@ -50,6 +57,7 @@ public class TicketServiceImpl implements TicketService {
 
         String key = ticketProperties.getRedisKeyPrefix() + ticket;
         return serialize(ticketInfo)
+                // 保存到 Redis，使用 TTL 控制过期时间
                 .flatMap(json -> redisTemplate.opsForValue()
                         .set(key, json, ticketProperties.getTtl())
                         .filter(Boolean::booleanValue)
@@ -63,10 +71,14 @@ public class TicketServiceImpl implements TicketService {
         return redisTemplate.opsForValue()
                 .get(key)
                 .switchIfEmpty(Mono.error(new GatewayException(20001, "ticket 无效或已过期")))
+                // 反序列化后按规则检查有效性，并在校验通过时删除 Redis 记录
                 .flatMap(value -> deserialize(value)
                         .flatMap(ticketInfo -> validateAndConsumeTicket(request, key, ticketInfo)));
     }
 
+    /**
+     * 校验 ticket 的有效性并删除缓存，实现一次性消费。
+     */
     private Mono<TicketValidationResponse> validateAndConsumeTicket(TicketValidateRequest request, String key, TicketInfoDTO ticketInfo) {
         if (ticketInfo.getExpireTime() != null && ticketInfo.getExpireTime().isBefore(LocalDateTime.now())) {
             return Mono.error(new GatewayException(20001, "ticket 无效或已过期"));
@@ -87,6 +99,9 @@ public class TicketServiceImpl implements TicketService {
                         .build());
     }
 
+    /**
+     * Ticket 对象序列化为 JSON，方便以字符串形式写入 Redis。
+     */
     private Mono<String> serialize(TicketInfoDTO ticketInfo) {
         try {
             return Mono.just(objectMapper.writeValueAsString(ticketInfo));
@@ -95,6 +110,9 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    /**
+     * 将 Redis 中的 JSON 字符串转换回 Ticket 对象。
+     */
     private Mono<TicketInfoDTO> deserialize(String value) {
         try {
             return Mono.just(objectMapper.readValue(value, TicketInfoDTO.class));
@@ -103,6 +121,9 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+    /**
+     * 根据路由配置或全局默认值选择网关访问地址，便于门户拼接跳转链接。
+     */
     private String determineGatewayBaseUrl(GatewaySystemProperties.SystemRoute route) {
         if (route != null && StringUtils.hasText(route.getGatewayBaseUrl())) {
             return route.getGatewayBaseUrl();

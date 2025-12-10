@@ -19,6 +19,9 @@ import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
 
+/**
+ * 提供给门户与业务系统使用的 Ticket REST 接口。
+ */
 @RestController
 @RequestMapping("/sso/ticket")
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class SsoTicketController {
     @PostMapping("/create")
     public Mono<ApiResponse<TicketCreateResponse>> create(@RequestHeader(value = "X-Inner-Secret", required = false) String innerSecret,
                                                           @Valid @RequestBody TicketCreateRequest request) {
+        // 简单的内部调用校验，可替换为 mTLS / 网关签名等更安全方案
         if (ticketProperties.isEnforceInnerSecret()) {
             if (innerSecret == null || !ticketProperties.getInnerSecret().equals(innerSecret)) {
                 return Mono.just(ApiResponse.failure(40001, "非法的内部调用"));
