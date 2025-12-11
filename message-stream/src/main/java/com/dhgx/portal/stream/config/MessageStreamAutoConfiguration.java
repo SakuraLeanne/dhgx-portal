@@ -32,10 +32,10 @@ public class MessageStreamAutoConfiguration {
     public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamMessageListenerContainer(
             StringRedisTemplate stringRedisTemplate) {
         StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
-                StreamMessageListenerContainerOptions.builder()
+                StreamMessageListenerContainerOptions.<String, MapRecord<String, String, String>>builder()
                         .batchSize(10)
                         .pollTimeout(Duration.ofSeconds(2))
-                        .targetType(String.class)
+                        .targetType(MapRecord.class)
                         .build();
         StreamMessageListenerContainer<String, MapRecord<String, String, String>> container =
                 StreamMessageListenerContainer.create(stringRedisTemplate.getRequiredConnectionFactory(), options);
