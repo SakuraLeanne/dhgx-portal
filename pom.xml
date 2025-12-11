@@ -23,6 +23,7 @@
         <module>auth-server</module>
         <module>portal-server</module>
         <module>gateway-server</module>
+        <module>message-stream</module>
     </modules>
 
     <properties>
