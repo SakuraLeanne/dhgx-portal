@@ -11,6 +11,7 @@ import org.springframework.data.redis.connection.stream.StreamOffset;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.stream.StreamMessageListenerContainer;
 import org.springframework.data.redis.stream.Subscription;
+import org.springframework.util.Assert;
 
 import java.util.Map;
 
@@ -32,9 +33,25 @@ public class MessageSubscriber {
      * @return 订阅句柄，可在需要时取消订阅
      */
     public Subscription subscribe(MessageHandler handler) {
-        createGroupIfNecessary();
-        StreamOffset<String> streamOffset = StreamOffset.create(properties.getStreamKey(), ReadOffset.lastConsumed());
-        Consumer consumer = Consumer.from(properties.getConsumerGroup(), properties.getConsumerName());
+        return subscribe(properties.getStreamKey(), properties.getConsumerGroup(), properties.getConsumerName(), handler);
+    }
+
+    /**
+     * 指定 Stream Key 与消费组的订阅方式，便于不同功能点隔离消息流。
+     *
+     * @param streamKey     需要订阅的 Stream Key
+     * @param consumerGroup 消费组名称
+     * @param consumerName  消费者名称
+     * @param handler       消息处理逻辑
+     * @return 订阅句柄，可在需要时取消订阅
+     */
+    public Subscription subscribe(String streamKey, String consumerGroup, String consumerName, MessageHandler handler) {
+        Assert.hasText(streamKey, "streamKey must not be blank");
+        Assert.hasText(consumerGroup, "consumerGroup must not be blank");
+        Assert.hasText(consumerName, "consumerName must not be blank");
+        createGroupIfNecessary(streamKey, consumerGroup);
+        StreamOffset<String> streamOffset = StreamOffset.create(streamKey, ReadOffset.lastConsumed());
+        Consumer consumer = Consumer.from(consumerGroup, consumerName);
 
         return container.receive(consumer, streamOffset, message -> {
             Map<String, String> body = message.getValue();
@@ -42,17 +59,17 @@ public class MessageSubscriber {
         });
     }
 
-    private void createGroupIfNecessary() {
+    private void createGroupIfNecessary(String streamKey, String consumerGroup) {
         if (!properties.isCreateGroupIfAbsent()) {
             return;
         }
         try {
-            stringRedisTemplate.opsForStream().createGroup(properties.getStreamKey(), properties.getConsumerGroup());
-            log.info("创建消费组 {} 用于 Stream {}", properties.getConsumerGroup(), properties.getStreamKey());
+            stringRedisTemplate.opsForStream().createGroup(streamKey, consumerGroup);
+            log.info("创建消费组 {} 用于 Stream {}", consumerGroup, streamKey);
         } catch (RedisSystemException e) {
             // 消费组已存在时会抛出 BUSYGROUP，忽略即可
             if (e.getMessage() != null && e.getMessage().contains("BUSYGROUP")) {
-                log.debug("消费组 {} 已存在", properties.getConsumerGroup());
+                log.debug("消费组 {} 已存在", consumerGroup);
             } else {
                 throw e;
             }
