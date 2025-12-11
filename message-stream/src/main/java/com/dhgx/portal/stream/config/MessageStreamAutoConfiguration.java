@@ -32,7 +32,7 @@ public class MessageStreamAutoConfiguration {
     public StreamMessageListenerContainer<String, MapRecord<String, String, String>> streamMessageListenerContainer(
             StringRedisTemplate stringRedisTemplate) {
         StreamMessageListenerContainerOptions<String, MapRecord<String, String, String>> options =
-                StreamMessageListenerContainerOptions.builder()
+                StreamMessageListenerContainerOptions.<String, MapRecord<String, String, String>>builder()
                         .batchSize(10)
                         .pollTimeout(Duration.ofSeconds(2))
                         .targetType(MapRecord.class)
